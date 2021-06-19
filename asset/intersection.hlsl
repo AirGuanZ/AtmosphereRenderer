@@ -1,6 +1,8 @@
 #ifndef INTERSECTION_HLSL
 #define INTERSECTION_HLSL
 
+#define PI 3.14159265
+
 bool hasIntersectionWithCiecle(float2 o, float2 d, float R)
 {
     float A = dot(d, d);

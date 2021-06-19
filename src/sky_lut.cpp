@@ -8,7 +8,7 @@ void SkyLUT::initialize(const Int2 &res)
         "./asset/sky_lut.hlsl", nullptr, "PSMain");
     
     shaderRscs_ = shader_.createResourceManager();
-
+    
     transmittanceSlot_ =
         shaderRscs_.getShaderResourceViewSlot<PS>("Transmittance");
     multiScatterSlot_ =
@@ -77,7 +77,7 @@ void SkyLUT::generate(
     psParamsData_.sunDirection = sunDirection;
     psParamsData_.sunIntensity = sunIntensity;
     psParams_.update(psParamsData_);
-
+    
     transmittanceSlot_->setShaderResourceView(std::move(transmittance));
     multiScatterSlot_->setShaderResourceView(std::move(multiscatter));
 

@@ -10,4 +10,5 @@ struct Vertex
 {
     Float3 position;
     Float3 normal;
+    Float3 color;
 };

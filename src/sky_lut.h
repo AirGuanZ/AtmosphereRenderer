@@ -47,7 +47,7 @@ private:
 
     Shader<VS, PS>         shader_;
     Shader<VS, PS>::RscMgr shaderRscs_;
-
+    
     ShaderResourceViewSlot<PS> *transmittanceSlot_ = nullptr;
     ShaderResourceViewSlot<PS> *multiScatterSlot_  = nullptr;
 

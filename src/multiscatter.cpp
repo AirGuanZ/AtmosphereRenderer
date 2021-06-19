@@ -41,7 +41,7 @@ namespace
 
 }
 
-void MultiScatteringTable::generate(
+void MultiScatteringLUT::generate(
     const Int2                      &res,
     ComPtr<ID3D11ShaderResourceView> transmittance,
     const Float3                    &terrainAlbedo,
@@ -145,7 +145,7 @@ void MultiScatteringTable::generate(
     shaderRscs.getSamplerSlot<CS>("TransmittanceSampler")
         ->setSampler(transmittanceSampler);
 
-    shaderRscs.getUnorderedAccessViewSlot<CS>("M")
+    shaderRscs.getUnorderedAccessViewSlot<CS>("MultiScattering")
         ->setUnorderedAccessView(uav);
 
     constexpr int THREAD_GROUP_SIZE_X = 16;
@@ -165,7 +165,7 @@ void MultiScatteringTable::generate(
     srv_ = std::move(srv);
 }
 
-ComPtr<ID3D11ShaderResourceView> MultiScatteringTable::getSRV() const
+ComPtr<ID3D11ShaderResourceView> MultiScatteringLUT::getSRV() const
 {
     return srv_;
 }

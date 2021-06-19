@@ -2,7 +2,7 @@
 
 #include "./medium.h"
 
-class MultiScatteringTable
+class MultiScatteringLUT
 {
 public:
 

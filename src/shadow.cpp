@@ -23,6 +23,19 @@ void ShadowMap::initialize(const Int2 &res)
         DXGI_FORMAT_R32_TYPELESS,
         DXGI_FORMAT_D32_FLOAT,
         DXGI_FORMAT_R32_FLOAT);
+    
+    D3D11_RASTERIZER_DESC rasDesc;
+    rasDesc.FillMode              = D3D11_FILL_SOLID;
+    rasDesc.CullMode              = D3D11_CULL_NONE;
+    rasDesc.FrontCounterClockwise = false;
+    rasDesc.DepthBias             = 0;
+    rasDesc.DepthBiasClamp        = 0;
+    rasDesc.SlopeScaledDepthBias  = 0;
+    rasDesc.DepthClipEnable       = true;
+    rasDesc.ScissorEnable         = false;
+    rasDesc.MultisampleEnable     = false;
+    rasDesc.AntialiasedLineEnable = false;
+    rasterState_ = device.createRasterizerState(rasDesc);
 
     vsTransform_.initialize();
     shaderRscs_.getConstantBufferSlot<VS>("VSTransform")
@@ -48,6 +61,7 @@ void ShadowMap::begin()
     shader_.bind();
     shaderRscs_.bind();
 
+    deviceContext->RSSetState(rasterState_.Get());
     deviceContext.setInputLayout(inputLayout_);
     deviceContext.setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
@@ -55,6 +69,7 @@ void ShadowMap::begin()
 void ShadowMap::end()
 {
     deviceContext.setInputLayout(nullptr);
+    deviceContext->RSSetState(nullptr);
 
     shaderRscs_.unbind();
     shader_.unbind();

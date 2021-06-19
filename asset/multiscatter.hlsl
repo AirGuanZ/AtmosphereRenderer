@@ -13,11 +13,10 @@ cbuffer CSParams
     int RayMarchStepCount;
 }
 
-RWTexture2D<float4> M;
-
 StructuredBuffer<float2> RawDirSamples;
 
-Texture2D<float3> Transmittance;
+RWTexture2D<float4> MultiScattering;
+Texture2D<float3>   Transmittance;
 
 SamplerState TransmittanceSampler;
 
@@ -58,8 +57,9 @@ void integrate(
 
         float3 worldPos = worldOri + midT * worldDir;
         float h = length(worldPos) - PlanetRadius;
-        float3 sigmaT = getSigmaT(h);
-        float3 sigmaS = getSigmaS(h);
+
+        float3 sigmaS, sigmaT;
+        getSigmaST(h, sigmaS, sigmaT);
 
         float3 deltaSumSigmaT = dt * sigmaT;
         float3 transmittance = exp(-sumSigmaT - 0.5 * deltaSumSigmaT);
@@ -120,7 +120,7 @@ float3 computeM(float h, float sunTheta)
 void CSMain(int3 threadIdx : SV_DispatchThreadID)
 {
     int width, height;
-    M.GetDimensions(width, height);
+    MultiScattering.GetDimensions(width, height);
     if(threadIdx.x >= width || threadIdx.y >= height)
         return;
 
@@ -130,5 +130,5 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
     float h = lerp(
         0.0, AtmosphereRadius - PlanetRadius, (threadIdx.x + 0.5) / width);
 
-    M[threadIdx.xy] = float4(computeM(h, sunTheta), 1);
+    MultiScattering[threadIdx.xy] = float4(computeM(h, sunTheta), 1);
 }

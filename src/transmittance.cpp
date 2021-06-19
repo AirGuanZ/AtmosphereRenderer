@@ -2,7 +2,7 @@
 
 #include "./transmittance.h"
 
-void TransmittanceTable::generate(
+void TransmittanceLUT::generate(
     const Int2 &res, const AtmosphereProperties &atmos)
 {
     if(!shader_.isAllStageAvailable())
@@ -67,7 +67,7 @@ void TransmittanceTable::generate(
     srv_  = std::move(srv);
 }
 
-ComPtr<ID3D11ShaderResourceView> TransmittanceTable::getSRV() const
+ComPtr<ID3D11ShaderResourceView> TransmittanceLUT::getSRV() const
 {
     return srv_;
 }

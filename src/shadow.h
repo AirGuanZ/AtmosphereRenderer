@@ -31,6 +31,8 @@ private:
     ComPtr<ID3D11InputLayout> inputLayout_;
     RenderTarget              renderTarget_;
 
+    ComPtr<ID3D11RasterizerState> rasterState_;
+
     Mat4                        viewProj_;
     ConstantBuffer<VSTransform> vsTransform_;
 };

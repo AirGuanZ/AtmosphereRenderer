@@ -2,7 +2,7 @@
 
 #include "./medium.h"
 
-class TransmittanceTable
+class TransmittanceLUT
 {
 public:
 

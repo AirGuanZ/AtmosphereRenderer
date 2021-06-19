@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./common.h"
+#include "./camera.h"
 
 class FinalRenderer
 {
@@ -8,7 +8,7 @@ public:
 
     void initialize();
 
-    void setCamera(const Mat4 &invViewProj);
+    void setCamera(const Camera::FrustumDirections &frustumDirs);
 
     void render(ComPtr<ID3D11ShaderResourceView> skyView);
 
