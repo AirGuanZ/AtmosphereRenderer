@@ -136,9 +136,9 @@ private:
 
     void showGUI()
     {
+        AGZ_SCOPE_GUARD({ ImGui::End(); });
         if(!ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
-        AGZ_SCOPE_GUARD({ ImGui::End(); });
 
         ImGui::Checkbox("Enable Terrain", &enableTerrain_);
         ImGui::Checkbox("Enable Multi Scattering", &enableMultiScatter_);

@@ -37,7 +37,7 @@ float4 PSMain(VSOutput input) : SV_TARGET
     float u = phi / (2 * PI);
     
     float theta = asin(dir.y);
-    float v = max(0.5 * (1 + sqrt(theta / (PI / 2))), 0.50001);
+    float v = 0.5 * (1 + sqrt(theta / (PI / 2)));
 
     float3 skyColor = SkyView.SampleLevel(SkyViewSampler, float2(u, v), 0);
 
