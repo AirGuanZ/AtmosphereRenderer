@@ -34,6 +34,7 @@ private:
     float sunAngleY_          = 18;
     float sunIntensity_       = 10;
 
+    bool enableTerrain_      = true;
     bool enableShadow_       = true;
     bool enableMultiScatter_ = true;
 
@@ -127,7 +128,8 @@ private:
         window_->clearDefaultDepth(1);
         window_->clearDefaultRenderTarget({ 0, 1, 1, 0 });
 
-        renderMeshes(sunDirection, sunRadiance, sunViewProj);
+        if(enableTerrain_)
+            renderMeshes(sunDirection, sunRadiance, sunViewProj);
 
         renderSky();
     }
@@ -138,6 +140,7 @@ private:
             return;
         AGZ_SCOPE_GUARD({ ImGui::End(); });
 
+        ImGui::Checkbox("Enable Terrain", &enableTerrain_);
         ImGui::Checkbox("Enable Multi Scattering", &enableMultiScatter_);
         ImGui::Checkbox("Enable Shadow", &enableShadow_);
         ImGui::InputFloat("World Scale", &worldScale_);
