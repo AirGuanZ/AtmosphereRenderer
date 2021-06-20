@@ -24,15 +24,15 @@ private:
     };
 
     float worldScale_               = 200;
-    float maxAerialDistance_        = 1000;
+    float maxAerialDistance_        = 2000;
     int   aerialPerSliceMarchCount_ = 2;
     float apJitterRadius_           = 1;
 
     Camera camera_;
     
     float sunAngleX_          = 0;
-    float sunAngleY_          = 18;
-    float sunIntensity_       = 10;
+    float sunAngleY_          = 11.6f;
+    float sunIntensity_       = 13;
 
     bool enableTerrain_      = true;
     bool enableShadow_       = true;
@@ -78,8 +78,8 @@ private:
 
         loadMesh("./asset/terrain.obj", Float3(0.1f), Trans4::translate(0, 1, 0));
 
-        camera_.setPosition({ -2.8f, 2.5f, -2.6f });
-        camera_.setDirection(PI, 0);
+        camera_.setPosition({ 4.087f, 3.6999f, 3.957f });
+        camera_.setDirection(3.687f, 0);
         camera_.setPerspective(60.0f, 0.1f, 100.0f);
 
         mouse_->setCursorLock(
