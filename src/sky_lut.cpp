@@ -24,13 +24,13 @@ void SkyLUT::initialize(const Int2 &res)
     shaderRscs_.getConstantBufferSlot<PS>("PSParams")
         ->setBuffer(psParams_);
 
-    auto transmittanceSampler = device.createSampler(
+    auto MTSampler = device.createSampler(
         D3D11_FILTER_MIN_MAG_MIP_LINEAR,
         D3D11_TEXTURE_ADDRESS_CLAMP,
         D3D11_TEXTURE_ADDRESS_CLAMP,
         D3D11_TEXTURE_ADDRESS_CLAMP);
-    shaderRscs_.getSamplerSlot<PS>("TransmittanceSampler")
-        ->setSampler(transmittanceSampler);
+    shaderRscs_.getSamplerSlot<PS>("MTSampler")
+        ->setSampler(MTSampler);
 }
 
 void SkyLUT::resize(const Int2 &res)
@@ -47,17 +47,14 @@ ComPtr<ID3D11ShaderResourceView> SkyLUT::getLUT() const
     return LUT_.getColorShaderResourceView(0);
 }
 
-void SkyLUT::setCamera(const Float3 &eye)
+void SkyLUT::setCamera(const Float3 &atmosEyePos)
 {
-    psParamsData_.eyePosition = eye;
+    psParamsData_.atmosEyePosition = atmosEyePos;
 }
 
-void SkyLUT::setParams(
-    int lowResStepCount, int highResStepCount, float highResStep)
+void SkyLUT::setRayMarching(int stepCount)
 {
-    psParamsData_.lowResMarchStepCount  = lowResStepCount;
-    psParamsData_.highResMarchStepCount = highResStepCount;
-    psParamsData_.highResMarchStep      = highResStep;
+    psParamsData_.lowResMarchStepCount = stepCount;
 }
 
 void SkyLUT::enableMultiScattering(bool enable)
@@ -76,6 +73,7 @@ void SkyLUT::generate(
 
     psParamsData_.sunDirection = sunDirection;
     psParamsData_.sunIntensity = sunIntensity;
+    psParamsData_.sunTheta     = std::asin(-sunDirection.y);
     psParams_.update(psParamsData_);
     
     transmittanceSlot_->setShaderResourceView(std::move(transmittance));

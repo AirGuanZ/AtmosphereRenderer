@@ -121,10 +121,10 @@ void MultiScatteringLUT::generate(
     struct CSParams
     {
         Float3 terrainAlbedo;
-        int dirSampleCount;
+        int    dirSampleCount;
 
         Float3 sunIntensity;
-        int rayMarchStepCount;
+        int    rayMarchStepCount;
     };
 
     ConstantBuffer<CSParams> csParams;

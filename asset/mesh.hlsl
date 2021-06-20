@@ -1,3 +1,4 @@
+#include "./dither.hlsl"
 #include "./medium.hlsl"
 
 cbuffer VSTransform
@@ -35,15 +36,22 @@ VSOutput VSMain(VSInput input)
 
 cbuffer PSParams
 {
-    float3 SunDirection; float SunTheta;
-    float3 SunIntensity; float MaxAerialDistance;
-    float3 EyePos;       float WorldScale;
+    float3   SunDirection;   float SunTheta;
+    float3   SunIntensity;   float MaxAerialDistance;
+    float3   EyePos;         float WorldScale;
+    float4x4 ShadowViewProj;
+    float2   JitterFactor;   float2 BlueNoiseUVFactor;
 }
 
 Texture2D<float3> Transmittance;
 Texture3D<float4> AerialPerspective;
+SamplerState      TASampler;
 
-SamplerState TASampler;
+Texture2D<float> ShadowMap;
+SamplerState     ShadowSampler;
+
+Texture2D<float2> BlueNoise;
+SamplerState      BlueNoiseSampler;
 
 float4 PSMain(VSOutput input) : SV_TARGET
 {
@@ -51,10 +59,16 @@ float4 PSMain(VSOutput input) : SV_TARGET
     float3 normal = normalize(input.worldNormal);
 
     float2 scrPos = input.screenPosition.xy / input.screenPosition.w;
+    scrPos = 0.5 + float2(0.5, -0.5) * scrPos;
+    
+    float2 bnUV   = scrPos * BlueNoiseUVFactor;
+    float2 bn     = BlueNoise.SampleLevel(BlueNoiseSampler, bnUV, 0);
+    float2 offset =
+        JitterFactor * bn.x * float2(cos(2 * PI * bn.y), sin(2 * PI * bn.y));
+    
     float apZ = WorldScale * distance(position, EyePos) / MaxAerialDistance;
     float4 ap = AerialPerspective.SampleLevel(
-        TASampler,
-        float3(0.5 + float2(0.5, -0.5) * scrPos, saturate(apZ)), 0);
+        TASampler, float3(scrPos + offset, saturate(apZ)), 0);
     float3 inScatter = ap.xyz;
 
     float eyeTrans = ap.w;
@@ -62,7 +76,21 @@ float4 PSMain(VSOutput input) : SV_TARGET
         Transmittance, TASampler, WorldScale * position.y, SunTheta);
     float3 sunRadiance = input.color * max(0, dot(normal, -SunDirection));
 
-    float3 result =
-        SunIntensity * (sunRadiance * sunTrans * eyeTrans + inScatter);
-    return float4(pow(result, 1 / 2.2), 1);
+    float4 shadowClip = mul(float4(position + 0.03 * normal, 1), ShadowViewProj);
+    float2 shadowNDC = shadowClip.xy / shadowClip.w;
+    float2 shadowUV = 0.5 + float2(0.5, -0.5) * shadowNDC;
+
+    float shadowFactor = 1;
+    if(all(saturate(shadowUV) == shadowUV))
+    {
+        float shadedDepth = shadowClip.z;
+        float sampledDepth = ShadowMap.SampleLevel(ShadowSampler, shadowUV, 0);
+        shadowFactor = shadedDepth <= sampledDepth;
+    }
+
+    float3 result = SunIntensity *
+        (shadowFactor * sunRadiance * sunTrans * eyeTrans + inScatter);
+    
+    result = avoidColorBanding(scrPos, pow(result, 1 / 2.2));
+    return float4(result, 1);
 }

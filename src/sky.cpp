@@ -1,9 +1,9 @@
-#include "./final.h"
+#include "./sky.h"
 
-void FinalRenderer::initialize()
+void SkyRenderer::initialize()
 {
-    shader_.initializeStageFromFile<VS>("./asset/final.hlsl", nullptr, "VSMain");
-    shader_.initializeStageFromFile<PS>("./asset/final.hlsl", nullptr, "PSMain");
+    shader_.initializeStageFromFile<VS>("./asset/sky.hlsl", nullptr, "VSMain");
+    shader_.initializeStageFromFile<PS>("./asset/sky.hlsl", nullptr, "PSMain");
 
     shaderRscs_ = shader_.createResourceManager();
 
@@ -22,7 +22,7 @@ void FinalRenderer::initialize()
         ->setSampler(skyViewSampler);
 }
 
-void FinalRenderer::setCamera(const Camera::FrustumDirections &frustumDirs)
+void SkyRenderer::setCamera(const Camera::FrustumDirections &frustumDirs)
 {
     psTransformData_.frustumA = frustumDirs.frustumA;
     psTransformData_.frustumB = frustumDirs.frustumB;
@@ -30,7 +30,7 @@ void FinalRenderer::setCamera(const Camera::FrustumDirections &frustumDirs)
     psTransformData_.frustumD = frustumDirs.frustumD;
 }
 
-void FinalRenderer::render(ComPtr<ID3D11ShaderResourceView> skyView)
+void SkyRenderer::render(ComPtr<ID3D11ShaderResourceView> skyView)
 {
     skyViewSlot_->setShaderResourceView(std::move(skyView));
     psTransform_.update(psTransformData_);

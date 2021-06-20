@@ -10,17 +10,17 @@ cbuffer CSParams
     float3 FrustumA;          float MaxDistance;
     float3 FrustumB;          int   PerSliceMarchStepCount;
     float3 FrustumC;          int   EnableMultiScattering;
-    float3 FrustumD;          float EyePositionY;
-    float3 ShadowEyePosition; int   EnableShadow;
+    float3 FrustumD;          float AtmosEyeHeight;
+    float3 EyePosition;       int   EnableShadow;
     float4x4 ShadowViewProj;  float WorldScale;
 }
 
 Texture2D<float3> MultiScattering;
 Texture2D<float3> Transmittance;
-SamplerState TransmittanceSampler;
+SamplerState      MTSampler;
 
 Texture2D<float> ShadowMap;
-SamplerState ShadowSampler;
+SamplerState     ShadowSampler;
 
 RWTexture3D<float4> AerialPerspectiveLUT;
 
@@ -40,7 +40,7 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
     float xf = (threadIdx.x + 0.5) / width;
     float yf = (threadIdx.y + 0.5) / height;
 
-    float3 ori = float3(0, EyePositionY, 0);
+    float3 ori = float3(0, AtmosEyeHeight, 0);
     float3 dir = normalize(lerp(
         lerp(FrustumA, FrustumB, xf), lerp(FrustumC, FrustumD, xf), yf));
 
@@ -61,6 +61,9 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
     float3 sumSigmaT = float3(0, 0, 0);
     float3 inScatter = float3(0, 0, 0);
 
+    float rand = frac(sin(dot(
+        float2(xf, yf), float2(12.9898, 78.233) * 2.0)) * 43758.5453);
+
     for(int z = 0; z < depth; ++z)
     {
         float dt = (tEnd - tBeg) / PerSliceMarchStepCount;
@@ -69,22 +72,51 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
         for(int i = 0; i < PerSliceMarchStepCount; ++i)
         {
             float nextT = t + dt;
-            if(EnableShadow)
+
+            float  midT = lerp(t, nextT, rand);
+            float3 posR = float3(0, ori.y + PlanetRadius, 0) + dir * midT;
+            float  h    = length(posR) - PlanetRadius;
+
+            float3 sigmaS, sigmaT;
+            getSigmaST(h, sigmaS, sigmaT);
+
+            float3 deltaSumSigmaT = dt * sigmaT;
+            float3 eyeTrans = exp(-sumSigmaT - 0.5 * deltaSumSigmaT);
+
+            if(!hasIntersectionWithSphere(posR, -SunDirection, PlanetRadius))
             {
-                shadowedMarchStepInAtmosphere(
-                    ShadowMap, ShadowSampler, ShadowViewProj,
-                    MultiScattering, Transmittance, TransmittanceSampler,
-                    EnableMultiScattering, SunDirection, SunTheta, u,
-                    ShadowEyePosition, ori, dir,
-                    WorldScale, t, nextT, sumSigmaT, inScatter);
+                float3 shadowPos  = EyePosition + dir * midT / WorldScale;
+                float4 shadowClip = mul(float4(shadowPos, 1), ShadowViewProj);
+                float2 shadowNDC  = shadowClip.xy / shadowClip.w;
+                float2 shadowUV   = 0.5 + float2(0.5, -0.5) * shadowNDC;
+
+                bool inShadow = EnableShadow;
+                if(EnableShadow && all(saturate(shadowUV) == shadowUV))
+                {
+                    float rayZ = shadowClip.z;
+                    float smZ = ShadowMap.SampleLevel(ShadowSampler, shadowUV, 0);
+                    inShadow = rayZ >= smZ;
+                }
+
+                if(!inShadow)
+                {
+                    float3 rho = evalPhaseFunction(h, u);
+                    float3 sunTrans = getTransmittance(
+                        Transmittance, MTSampler, h, SunTheta);
+                    inScatter += dt * eyeTrans * sigmaS * rho * sunTrans;
+                }
             }
-            else
+
+            if(EnableMultiScattering)
             {
-                marchStepInAtmosphere(
-                    MultiScattering, Transmittance, TransmittanceSampler,
-                    EnableMultiScattering, SunDirection, SunTheta, u,
-                    ori, dir, t, nextT, sumSigmaT, inScatter);
+                float tx = h / (AtmosphereRadius - PlanetRadius);
+                float ty = 0.5 + 0.5 * sin(SunTheta);
+                float3 ms = MultiScattering.SampleLevel(
+                    MTSampler, float2(tx, ty), 0);
+                inScatter += dt * eyeTrans * sigmaS * ms;
             }
+
+            sumSigmaT += deltaSumSigmaT;
             t = nextT;
         }
 

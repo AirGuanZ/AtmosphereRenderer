@@ -2,7 +2,7 @@
 
 #include "./camera.h"
 
-class FinalRenderer
+class SkyRenderer
 {
 public:
 

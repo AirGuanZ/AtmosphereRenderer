@@ -47,7 +47,7 @@ ComPtr<ID3D11ShaderResourceView> ShadowMap::getShadowMap() const
     return renderTarget_.getDepthShaderResourceView();
 }
 
-void ShadowMap::setLight(const Mat4 &lightViewProj)
+void ShadowMap::setSun(const Mat4 &lightViewProj)
 {
     viewProj_ = lightViewProj;
 }

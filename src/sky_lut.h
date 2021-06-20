@@ -12,10 +12,9 @@ public:
     
     ComPtr<ID3D11ShaderResourceView> getLUT() const;
 
-    void setCamera(const Float3 &eye);
+    void setCamera(const Float3 &atmosEyePos);
 
-    void setParams(
-        int lowResStepCount, int highResStepCount, float highResStep);
+    void setRayMarching(int stepCount);
 
     void enableMultiScattering(bool enable);
 
@@ -30,19 +29,14 @@ private:
 
     struct PSParams
     {
-        Float3 eyePosition;
-        int lowResMarchStepCount;
+        Float3 atmosEyePosition;
+        int    lowResMarchStepCount;
 
         Float3 sunDirection;
-        float highResMarchStep;
+        int    enableMultiScattering;
 
         Float3 sunIntensity;
-        int highResMarchStepCount;
-
-        int enableMultiScattering;
-        float pad0;
-        float pad1;
-        float pad2;
+        float  sunTheta;
     };
 
     Shader<VS, PS>         shader_;

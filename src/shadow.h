@@ -10,7 +10,7 @@ public:
 
     ComPtr<ID3D11ShaderResourceView> getShadowMap() const;
 
-    void setLight(const Mat4 &lightViewProj);
+    void setSun(const Mat4 &lightViewProj);
 
     void begin();
 

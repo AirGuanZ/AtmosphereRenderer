@@ -1,3 +1,5 @@
+#include "./dither.hlsl"
+
 #define PI 3.14159265
 
 struct VSOutput
@@ -23,8 +25,7 @@ cbuffer PSTransform
 }
 
 Texture2D<float3> SkyView;
-
-SamplerState SkyViewSampler;
+SamplerState      SkyViewSampler;
 
 float4 PSMain(VSOutput input) : SV_TARGET
 {
@@ -32,19 +33,14 @@ float4 PSMain(VSOutput input) : SV_TARGET
         lerp(FrustumA, FrustumB, input.texCoord.x),
         lerp(FrustumC, FrustumD, input.texCoord.x), input.texCoord.y));
 
-    float phi = !dir.z && !dir.x ? 0 : atan2(dir.z, dir.x);
+    float phi = atan2(dir.z, dir.x);
     float u = phi / (2 * PI);
     
     float theta = asin(dir.y);
-    float v = max(0.5 * (1 + sqrt(theta / (PI / 2))), 0.5);
+    float v = max(0.5 * (1 + sqrt(theta / (PI / 2))), 0.50001);
 
     float3 skyColor = SkyView.SampleLevel(SkyViewSampler, float2(u, v), 0);
 
-    float rand = frac(sin(dot(
-        input.texCoord, float2(12.9898, 78.233) * 2.0)) * 43758.5453);
-    skyColor = 255 * saturate(pow(skyColor, 1 / 2.2));
-    skyColor = rand.xxx < (skyColor - floor(skyColor)) ? ceil(skyColor) : floor(skyColor);
-    skyColor *= 1.0 / 255;
-
+    skyColor = avoidColorBanding(input.texCoord, pow(skyColor, 1 / 2.2));
     return float4(skyColor, 1);
 }

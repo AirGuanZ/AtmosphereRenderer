@@ -1,6 +1,6 @@
 #include "./aerial_lut.h"
 
-void AerialPerspectiveLUT_::initialize(const Int3 &res)
+void AerialPerspectiveLUT::initialize(const Int3 &res)
 {
     shader_.initializeStageFromFile<CS>(
         "./asset/aerial_lut.hlsl", nullptr, "CSMain");
@@ -21,13 +21,13 @@ void AerialPerspectiveLUT_::initialize(const Int3 &res)
     atmos_.initialize();
     shaderRscs_.getConstantBufferSlot<CS>("AtmosphereParams")->setBuffer(atmos_);
 
-    auto transmittanceSampler = device.createSampler(
+    auto MTSampler = device.createSampler(
         D3D11_FILTER_MIN_MAG_MIP_LINEAR,
         D3D11_TEXTURE_ADDRESS_CLAMP,
         D3D11_TEXTURE_ADDRESS_CLAMP,
         D3D11_TEXTURE_ADDRESS_CLAMP);
-    shaderRscs_.getSamplerSlot<CS>("TransmittanceSampler")
-        ->setSampler(transmittanceSampler);
+    shaderRscs_.getSamplerSlot<CS>("MTSampler")
+        ->setSampler(MTSampler);
 
     auto shadowSampler = device.createSampler(
         D3D11_FILTER_MIN_MAG_MIP_POINT,
@@ -38,7 +38,7 @@ void AerialPerspectiveLUT_::initialize(const Int3 &res)
         ->setSampler(shadowSampler);
 }
 
-void AerialPerspectiveLUT_::resize(const Int3 &res)
+void AerialPerspectiveLUT::resize(const Int3 &res)
 {
     D3D11_TEXTURE3D_DESC texDesc;
     texDesc.Width          = static_cast<UINT>(res.x);
@@ -75,59 +75,67 @@ void AerialPerspectiveLUT_::resize(const Int3 &res)
         ->setUnorderedAccessView(std::move(uav_));
 }
 
-void AerialPerspectiveLUT_::setCamera(
-    const Float3                    &shadowEyePos,
-    float                            eyePosY,
+void AerialPerspectiveLUT::setCamera(
+    const Float3                    &eyePos,
+    float                            atmosEyeHeight,
     const Camera::FrustumDirections &frustumDirs)
 {
-    csParamsData_.shadowEyePosition = shadowEyePos;
-    csParamsData_.eyePositionY = eyePosY;
-    csParamsData_.frustumA = frustumDirs.frustumA;
-    csParamsData_.frustumB = frustumDirs.frustumB;
-    csParamsData_.frustumC = frustumDirs.frustumC;
-    csParamsData_.frustumD = frustumDirs.frustumD;
+    csParamsData_.shadowEyePosition = eyePos;
+    csParamsData_.eyePositionY      = atmosEyeHeight;
+    csParamsData_.frustumA          = frustumDirs.frustumA;
+    csParamsData_.frustumB          = frustumDirs.frustumB;
+    csParamsData_.frustumC          = frustumDirs.frustumC;
+    csParamsData_.frustumD          = frustumDirs.frustumD;
 }
 
-void AerialPerspectiveLUT_::setSun(const Float3 &sunDirection)
+void AerialPerspectiveLUT::setSun(const Float3 &sunDirection)
 {
     csParamsData_.sunDirection = sunDirection.normalize();
     csParamsData_.sunTheta = std::asin(-csParamsData_.sunDirection.y);
 }
 
-void AerialPerspectiveLUT_::setParams(
-    float worldScale,
-    bool  enableMultiScattering,
-    bool  enableShadow,
-    float maxDistance,
-    int   perSliceMarchStepCount)
+void AerialPerspectiveLUT::setWorldScale(float worldScale)
 {
-    csParamsData_.worldScale            = worldScale;
-    csParamsData_.enableMultiScattering = enableMultiScattering;
-    csParamsData_.enableShadow          = enableShadow;
-    csParamsData_.maxDistance           = maxDistance;
-    csParamsData_.perSliceStepCount     = perSliceMarchStepCount;
+    csParamsData_.worldScale = worldScale;
 }
 
-ComPtr<ID3D11ShaderResourceView> AerialPerspectiveLUT_::getOutput() const
-{
-    return srv_;
-}
-
-void AerialPerspectiveLUT_::render(
-    const Mat4                      &shadowViewProj,
-    ComPtr<ID3D11ShaderResourceView> shadowMap,
-    const AtmosphereProperties      &atmos,
-    ComPtr<ID3D11ShaderResourceView> multiScatter,
-    ComPtr<ID3D11ShaderResourceView> transmittance)
+void AerialPerspectiveLUT::setAtmosphere(const AtmosphereProperties &atmos)
 {
     atmos_.update(atmos);
+}
 
+void AerialPerspectiveLUT::setShadow(
+    bool                             enableShadow,
+    const Mat4                      &shadowViewProj,
+    ComPtr<ID3D11ShaderResourceView> shadowMap)
+{
+    csParamsData_.enableShadow   = enableShadow;
     csParamsData_.shadowViewProj = shadowViewProj;
-    csParams_.update(csParamsData_);
+    shadowMapSlot_->setShaderResourceView(std::move(shadowMap));
+}
 
-    shadowMapSlot_->setShaderResourceView(shadowMap);
-    multiScatterSlot_->setShaderResourceView(multiScatter);
-    transmittanceSlot_->setShaderResourceView(transmittance);
+void AerialPerspectiveLUT::setMarchingParams(
+    float maxDistance, int stepsPerSlice)
+{
+    csParamsData_.maxDistance       = maxDistance;
+    csParamsData_.perSliceStepCount = stepsPerSlice;
+}
+
+void AerialPerspectiveLUT::setMultiScatterLUT(
+    ComPtr<ID3D11ShaderResourceView> M)
+{
+    multiScatterSlot_->setShaderResourceView(std::move(M));
+}
+
+void AerialPerspectiveLUT::setTransmittanceLUT(
+    ComPtr<ID3D11ShaderResourceView> T)
+{
+    transmittanceSlot_->setShaderResourceView(std::move(T));
+}
+
+void AerialPerspectiveLUT::render()
+{
+    csParams_.update(csParamsData_);
 
     shader_.bind();
     shaderRscs_.bind();
@@ -143,4 +151,9 @@ void AerialPerspectiveLUT_::render(
 
     shaderRscs_.unbind();
     shader_.unbind();
+}
+
+ComPtr<ID3D11ShaderResourceView> AerialPerspectiveLUT::getOutput() const
+{
+    return srv_;
 }

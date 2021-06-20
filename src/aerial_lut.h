@@ -3,7 +3,7 @@
 #include "./camera.h"
 #include "./medium.h"
 
-class AerialPerspectiveLUT_
+class AerialPerspectiveLUT
 {
 public:
 
@@ -12,27 +12,30 @@ public:
     void resize(const Int3 &res);
 
     void setCamera(
-        const Float3                    &shadowEyePos,
-        float                            eyePosY,
+        const Float3                    &eyePos,
+        float                            atmosEyeHeight,
         const Camera::FrustumDirections &frustumDirs);
 
     void setSun(const Float3 &sunDirection);
 
-    void setParams(
-        float worldScale,
-        bool  enableMultiScattering,
-        bool  enableShadow,
-        float maxDistance,
-        int   perSliceMarchStepCount);
+    void setWorldScale(float worldScale);
+
+    void setAtmosphere(const AtmosphereProperties &atmos);
+
+    void setShadow(
+        bool                             enableShadow,
+        const Mat4                      &shadowViewProj,
+        ComPtr<ID3D11ShaderResourceView> shadowMap);
+
+    void setMarchingParams(float maxDistance, int stepsPerSlice);
+
+    void setMultiScatterLUT(ComPtr<ID3D11ShaderResourceView> M);
+
+    void setTransmittanceLUT(ComPtr<ID3D11ShaderResourceView> T);
 
     ComPtr<ID3D11ShaderResourceView> getOutput() const;
 
-    void render(
-        const Mat4                      &shadowViewProj,
-        ComPtr<ID3D11ShaderResourceView> shadowMap,
-        const AtmosphereProperties      &atmos,
-        ComPtr<ID3D11ShaderResourceView> multiScatter,
-        ComPtr<ID3D11ShaderResourceView> transmittance);
+    void render();
 
 private:
 

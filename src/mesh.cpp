@@ -9,6 +9,7 @@ void MeshRenderer::initialize()
 
     shaderRscs_ = shader_.createResourceManager();
 
+    shadowSlot_ = shaderRscs_.getShaderResourceViewSlot<PS>("ShadowMap");
     TSlot_ = shaderRscs_.getShaderResourceViewSlot<PS>("Transmittance");
     ASlot_ = shaderRscs_.getShaderResourceViewSlot<PS>("AerialPerspective");
 
@@ -50,17 +51,61 @@ void MeshRenderer::initialize()
         D3D11_TEXTURE_ADDRESS_CLAMP);
     shaderRscs_.getSamplerSlot<PS>("TASampler")
         ->setSampler(TASampler);
+
+    auto shadowSampler = device.createSampler(
+        D3D11_FILTER_MIN_MAG_MIP_POINT,
+        D3D11_TEXTURE_ADDRESS_CLAMP,
+        D3D11_TEXTURE_ADDRESS_CLAMP,
+        D3D11_TEXTURE_ADDRESS_CLAMP);
+    shaderRscs_.getSamplerSlot<PS>("ShadowSampler")
+        ->setSampler(shadowSampler);
+
+    auto blueNoise = Texture2DLoader::loadFromFile(
+        DXGI_FORMAT_R8G8B8A8_UNORM, "./asset/bn.png", 1);
+    shaderRscs_.getShaderResourceViewSlot<PS>("BlueNoise")
+        ->setShaderResourceView(blueNoise);
+
+    ComPtr<ID3D11Resource> blueNoiseRsc;
+    blueNoise->GetResource(blueNoiseRsc.GetAddressOf());
+
+    ComPtr<ID3D11Texture2D> blueNoiseTex;
+    blueNoiseRsc->QueryInterface(blueNoiseTex.GetAddressOf());
+
+    D3D11_TEXTURE2D_DESC blueNoiseDesc;
+    blueNoiseTex->GetDesc(&blueNoiseDesc);
+    invBlueNoiseRes_ =
+        { 1.0f / blueNoiseDesc.Width, 1.0f / blueNoiseDesc.Height };
+
+    auto blueNoiseSampler = device.createSampler(
+        D3D11_FILTER_MIN_MAG_MIP_POINT,
+        D3D11_TEXTURE_ADDRESS_WRAP,
+        D3D11_TEXTURE_ADDRESS_WRAP,
+        D3D11_TEXTURE_ADDRESS_WRAP);
+    shaderRscs_.getSamplerSlot<PS>("BlueNoiseSampler")
+        ->setSampler(blueNoiseSampler);
 }
 
 void MeshRenderer::setAtmosphere(
     const AtmosphereProperties      &atmos,
     ComPtr<ID3D11ShaderResourceView> trans,
     ComPtr<ID3D11ShaderResourceView> aerial,
+    float                            aerialJitterRadius,
     float                            maxAerialDistance)
 {
     atmos_.update(atmos);
     TSlot_->setShaderResourceView(trans);
     ASlot_->setShaderResourceView(aerial);
+    
+    ComPtr<ID3D11Resource> aerialRsc;
+    aerial->GetResource(aerialRsc.GetAddressOf());
+    ComPtr<ID3D11Texture3D> aerialTex;
+    aerialRsc->QueryInterface(aerialTex.GetAddressOf());
+    D3D11_TEXTURE3D_DESC aerialDesc;
+    aerialTex->GetDesc(&aerialDesc);
+
+    psParamsData_.jitterFactor.x = aerialJitterRadius / aerialDesc.Width;
+    psParamsData_.jitterFactor.y = aerialJitterRadius / aerialDesc.Height;
+
     psParamsData_.maxAerialDistance = maxAerialDistance;
 }
 
@@ -70,7 +115,7 @@ void MeshRenderer::setCamera(const Float3 &eye, const Mat4 &viewProj)
     viewProj_ = viewProj;
 }
 
-void MeshRenderer::setLight(const Float3 &direction, const Float3 &intensity)
+void MeshRenderer::setSun(const Float3 &direction, const Float3 &intensity)
 {
     psParamsData_.sunTheta     = std::asin(direction.y);
     psParamsData_.sunDirection = direction;
@@ -80,6 +125,21 @@ void MeshRenderer::setLight(const Float3 &direction, const Float3 &intensity)
 void MeshRenderer::setWorldScale(float scale)
 {
     psParamsData_.worldScale = scale;
+}
+
+void MeshRenderer::setRenderTarget(const Int2 &size)
+{
+    psParamsData_.blueNoiseFactor = {
+        size.x * invBlueNoiseRes_.x,
+        size.y * invBlueNoiseRes_.y
+    };
+}
+
+void MeshRenderer::setShadowMap(
+    ComPtr<ID3D11ShaderResourceView> shadowMap, const Mat4 &viewProj)
+{
+    shadowSlot_->setShaderResourceView(shadowMap);
+    psParamsData_.shadowViewProj = viewProj;
 }
 
 void MeshRenderer::begin()

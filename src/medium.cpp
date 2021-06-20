@@ -1,5 +1,21 @@
 #include "./medium.h"
 
+AtmosphereProperties AtmosphereProperties::toStdUnit() const
+{
+    AtmosphereProperties ret = *this;
+    ret.scatterRayleigh   = 1e-6f * ret.scatterRayleigh;
+    ret.hDensityRayleigh  = 1e3f  * ret.hDensityRayleigh;
+    ret.scatterMie        = 1e-6f * ret.scatterMie;
+    ret.absorbMie         = 1e-6f * ret.absorbMie;
+    ret.hDensityMie       = 1e3f  * ret.hDensityMie;
+    ret.absorbOzone       = 1e-6f * ret.absorbOzone;
+    ret.ozoneCenterHeight = 1e3f  * ret.ozoneCenterHeight;
+    ret.ozoneThickness    = 1e3f  * ret.ozoneThickness;
+    ret.planetRadius      = 1e3f  * ret.planetRadius;
+    ret.atmosphereRadius  = 1e3f  * ret.atmosphereRadius;
+    return ret;
+}
+
 Float3 AtmosphereProperties::getSigmaS(float h) const
 {
     const Float3 rayleigh = scatterRayleigh * std::exp(-h / hDensityRayleigh);
