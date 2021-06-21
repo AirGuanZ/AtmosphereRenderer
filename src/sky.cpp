@@ -9,6 +9,13 @@ void SkyRenderer::initialize()
 
     skyViewSlot_ = shaderRscs_.getShaderResourceViewSlot<PS>("SkyView");
 
+    D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+    dsDesc.DepthEnable    = true;
+    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+    dsDesc.DepthFunc      = D3D11_COMPARISON_LESS;
+    dsDesc.StencilEnable  = false;
+    dsState_ = device.createDepthStencilState(dsDesc);
+
     psTransform_.initialize();
     shaderRscs_.getConstantBufferSlot<PS>("PSTransform")
         ->setBuffer(psTransform_);
@@ -37,10 +44,12 @@ void SkyRenderer::render(ComPtr<ID3D11ShaderResourceView> skyView)
 
     shader_.bind();
     shaderRscs_.bind();
+    deviceContext->OMSetDepthStencilState(dsState_.Get(), 0);
 
     deviceContext.setPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     deviceContext.draw(6, 0);
 
+    deviceContext->OMSetDepthStencilState(nullptr, 0);
     shaderRscs_.unbind();
     shader_.unbind();
 }

@@ -7,6 +7,7 @@
 #include "./sky.h"
 #include "./sky_lut.h"
 #include "./shadow.h"
+#include "./sun.h"
 #include "./transmittance.h"
 
 class AtmosphereRendererDemo : public Demo
@@ -28,21 +29,26 @@ private:
     int   aerialPerSliceMarchCount_ = 2;
     float apJitterRadius_           = 1;
 
+    int   sunDiskSegments_ = 32;
+    float sunDiskSize_     = 0.004649f;
+
     Camera camera_;
     
-    float sunAngleX_          = 0;
-    float sunAngleY_          = 11.6f;
-    float sunIntensity_       = 7;
+    float  sunAngleX_          = 0;
+    float  sunAngleY_          = 11.6f;
+    float  sunIntensity_       = 7;
+    Float3 sunColor_           = { 1, 1, 1 };
 
     bool enableTerrain_      = true;
     bool enableShadow_       = true;
+    bool enableSunDisk_      = true;
     bool enableMultiScatter_ = true;
 
     int skyMarchStepCount_ = 40;
 
     Int2 transLUTRes_  = { 256, 256 };
     Int2 msLUTRes_     = { 256, 256 };
-    Int2 skyLUTRes_    = { 64, 64};
+    Int2 skyLUTRes_    = { 64, 64 };
     Int3 aerialLUTRes_ = { 200, 150, 32 };
 
     AtmosphereProperties atmos_;
@@ -56,6 +62,7 @@ private:
 
     ShadowMap    shadowMap_;
     SkyRenderer  skyRenderer_;
+    SunRenderer  sunRenderer_;
     MeshRenderer meshRenderer_;
 
     std::vector<Mesh> meshes_;
@@ -74,7 +81,10 @@ private:
         skyLUT_.initialize(skyLUTRes_);
         
         skyRenderer_.initialize();
+        sunRenderer_.initialize();
         meshRenderer_.initialize();
+
+        sunRenderer_.setSunDiskSegments(sunDiskSegments_);
 
         loadMesh("./asset/terrain.obj", Float3(0.1f), Trans4::translate(0, 1, 0));
 
@@ -111,7 +121,7 @@ private:
             sin(sunRadY),
             sin(sunRadX) * cos(sunRadY)).normalize();
 
-        const Float3 sunRadiance = Float3(sunIntensity_);
+        const Float3 sunRadiance = sunIntensity_ * sunColor_;
 
         const Mat4 sunViewProj =
             Trans4::look_at(-sunDirection * 20, { 0, 0, 0 }, { 0, 1, 0 }) *
@@ -132,6 +142,9 @@ private:
             renderMeshes(sunDirection, sunRadiance, sunViewProj);
 
         renderSky();
+
+        if(enableSunDisk_)
+            renderSunDisk(sunDirection, sunRadiance);
     }
 
     void showGUI()
@@ -140,9 +153,11 @@ private:
         if(!ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
         
-        ImGui::Checkbox("Enable Terrain", &enableTerrain_);
         ImGui::Checkbox("Enable Multi Scattering", &enableMultiScatter_);
         ImGui::Checkbox("Enable Shadow", &enableShadow_);
+        ImGui::Checkbox("Enable Sun Disk", &enableSunDisk_);
+        ImGui::Checkbox("Enable Terrain", &enableTerrain_);
+
         ImGui::InputFloat("World Scale", &worldScale_);
 
         ImGui::SetNextTreeNodeOpen(false, ImGuiCond_Once);
@@ -179,6 +194,13 @@ private:
             ImGui::SliderFloat("Sun Angle Y", &sunAngleY_, 0, 90);
             ImGui::SliderFloat("Sun Angle X", &sunAngleX_, 0, 360);
             ImGui::InputFloat("Sun Intensity", &sunIntensity_);
+            ImGui::InputFloat("Sun Disk Size", &sunDiskSize_, 0, 0, 8);
+            if(ImGui::InputInt("Sun Disk Segments", &sunDiskSegments_))
+            {
+                sunDiskSegments_ = (std::max)(sunDiskSegments_, 1);
+                sunRenderer_.setSunDiskSegments(sunDiskSegments_);
+            }
+            ImGui::ColorEdit3("Sun Color", &sunColor_.x);
             ImGui::TreePop();
         }
 
@@ -303,6 +325,16 @@ private:
     {
         skyRenderer_.setCamera(camera_.getFrustumDirections());
         skyRenderer_.render(skyLUT_.getLUT());
+    }
+
+    void renderSunDisk(const Float3 &direction, const Float3 &radiance)
+    {
+        sunRenderer_.setWorldScale(worldScale_);
+        sunRenderer_.setCamera(camera_.getPosition(), camera_.getViewProj());
+        sunRenderer_.setAtmosphere(stdUnitAtmos_);
+        sunRenderer_.setSun(sunDiskSize_, direction, radiance);
+        sunRenderer_.setTransmittance(transLUT_.getSRV());
+        sunRenderer_.render();
     }
 
     void loadMesh(

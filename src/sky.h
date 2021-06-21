@@ -27,6 +27,8 @@ private:
 
     ShaderResourceViewSlot<PS> *skyViewSlot_ = nullptr;
 
+    ComPtr<ID3D11DepthStencilState> dsState_;
+
     PSTransform                 psTransformData_ = {};
     ConstantBuffer<PSTransform> psTransform_;
 };

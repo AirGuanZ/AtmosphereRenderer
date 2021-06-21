@@ -8,7 +8,7 @@ struct AtmosphereProperties
     float  hDensityRayleigh = 8;
 
     float scatterMie   = 3.996f;
-    float asymmetryMie = 0.8f;
+    float asymmetryMie = 0.82f;
     float absorbMie    = 4.4f;
     float hDensityMie  = 1.2f;
 
