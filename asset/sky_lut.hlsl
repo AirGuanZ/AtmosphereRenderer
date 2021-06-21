@@ -29,7 +29,6 @@ cbuffer PSParams
     int    EnableMultiScattering;
 
     float3 SunIntensity;
-    float  SunTheta;
 }
 
 void marchStep(
@@ -46,12 +45,14 @@ void marchStep(
     float3 deltaSumSigmaT = (nextT - thisT) * sigmaT;
     float3 eyeTrans = exp(-sumSigmaT - 0.5 * deltaSumSigmaT);
 
+    float sunTheta = PI / 2 - acos(dot(-SunDirection, normalize(posR)));
+
     if(!hasIntersectionWithSphere(
         posR, -SunDirection, PlanetRadius))
     {
         float3 rho = evalPhaseFunction(h, phaseU);
         float3 sunTrans = getTransmittance(
-            Transmittance, MTSampler, h, SunTheta);
+            Transmittance, MTSampler, h, sunTheta);
 
         inScattering += (nextT - thisT) * eyeTrans * sigmaS * rho * sunTrans;
     }
@@ -59,7 +60,7 @@ void marchStep(
     if(EnableMultiScattering)
     {
         float tx = h / (AtmosphereRadius - PlanetRadius);
-        float ty = 0.5 + 0.5 * sin(SunTheta);
+        float ty = 0.5 + 0.5 * sin(sunTheta);
         float3 ms = MultiScattering.SampleLevel(
             MTSampler, float2(tx, ty), 0);
 

@@ -36,7 +36,7 @@ private:
         int    enableMultiScattering;
 
         Float3 sunIntensity;
-        float  sunTheta;
+        float  pad0;
     };
 
     Shader<VS, PS>         shader_;

@@ -73,7 +73,6 @@ void SkyLUT::generate(
 
     psParamsData_.sunDirection = sunDirection;
     psParamsData_.sunIntensity = sunIntensity;
-    psParamsData_.sunTheta     = std::asin(-sunDirection.y);
     psParams_.update(psParamsData_);
     
     transmittanceSlot_->setShaderResourceView(std::move(transmittance));

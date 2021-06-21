@@ -1,4 +1,4 @@
-#include "./dither.hlsl"
+#include "./postcolor.hlsl"
 
 #define PI 3.14159265
 
@@ -37,10 +37,10 @@ float4 PSMain(VSOutput input) : SV_TARGET
     float u = phi / (2 * PI);
     
     float theta = asin(dir.y);
-    float v = 0.5 * (1 + sqrt(theta / (PI / 2)));
+    float v = 0.5 + 0.5 * sign(theta) * sqrt(abs(theta) / (PI / 2));
 
     float3 skyColor = SkyView.SampleLevel(SkyViewSampler, float2(u, v), 0);
 
-    skyColor = avoidColorBanding(input.texCoord, pow(skyColor, 1 / 2.2));
+    skyColor = postProcessColor(input.texCoord, skyColor);
     return float4(skyColor, 1);
 }

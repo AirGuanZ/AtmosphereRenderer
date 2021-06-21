@@ -1,5 +1,5 @@
-#include "./dither.hlsl"
 #include "./medium.hlsl"
+#include "./postcolor.hlsl"
 
 cbuffer VSTransform
 {
@@ -91,6 +91,6 @@ float4 PSMain(VSOutput input) : SV_TARGET
     float3 result = SunIntensity *
         (shadowFactor * sunRadiance * sunTrans * eyeTrans + inScatter);
     
-    result = avoidColorBanding(scrPos, pow(result, 1 / 2.2));
+    result = postProcessColor(scrPos, result);
     return float4(result, 1);
 }

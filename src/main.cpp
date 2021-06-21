@@ -32,7 +32,7 @@ private:
     
     float sunAngleX_          = 0;
     float sunAngleY_          = 11.6f;
-    float sunIntensity_       = 13;
+    float sunIntensity_       = 7;
 
     bool enableTerrain_      = true;
     bool enableShadow_       = true;
@@ -139,7 +139,7 @@ private:
         AGZ_SCOPE_GUARD({ ImGui::End(); });
         if(!ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             return;
-
+        
         ImGui::Checkbox("Enable Terrain", &enableTerrain_);
         ImGui::Checkbox("Enable Multi Scattering", &enableMultiScatter_);
         ImGui::Checkbox("Enable Shadow", &enableShadow_);

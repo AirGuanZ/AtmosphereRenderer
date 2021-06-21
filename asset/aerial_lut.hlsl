@@ -77,6 +77,8 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
             float3 posR = float3(0, ori.y + PlanetRadius, 0) + dir * midT;
             float  h    = length(posR) - PlanetRadius;
 
+            float sunTheta = PI / 2 - acos(dot(-SunDirection, normalize(posR)));
+
             float3 sigmaS, sigmaT;
             getSigmaST(h, sigmaS, sigmaT);
 
@@ -102,7 +104,7 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
                 {
                     float3 rho = evalPhaseFunction(h, u);
                     float3 sunTrans = getTransmittance(
-                        Transmittance, MTSampler, h, SunTheta);
+                        Transmittance, MTSampler, h, sunTheta);
                     inScatter += dt * eyeTrans * sigmaS * rho * sunTrans;
                 }
             }
@@ -110,7 +112,7 @@ void CSMain(int3 threadIdx : SV_DispatchThreadID)
             if(EnableMultiScattering)
             {
                 float tx = h / (AtmosphereRadius - PlanetRadius);
-                float ty = 0.5 + 0.5 * sin(SunTheta);
+                float ty = 0.5 + 0.5 * sin(sunTheta);
                 float3 ms = MultiScattering.SampleLevel(
                     MTSampler, float2(tx, ty), 0);
                 inScatter += dt * eyeTrans * sigmaS * ms;
