@@ -16,8 +16,7 @@ cmake ..
 
 ![](./gallery/00.png)
 
-![](./gallery/02.png)
-
 ![](./gallery/01.png)
 
-![](./gallery/03.png)
+![](./gallery/02.png)
+
