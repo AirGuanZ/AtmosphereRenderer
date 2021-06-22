@@ -70,6 +70,8 @@ private:
 
     void initialize() override
     {
+        window_->setMaximized();
+
         stdUnitAtmos_ = atmos_.toStdUnit();
 
         transLUT_.generate(transLUTRes_, stdUnitAtmos_);
@@ -270,13 +272,14 @@ private:
         const Float3 &sunDirection,
         const Float3 &sunRadiance)
     {
-        skyLUT_.enableMultiScattering(enableMultiScatter_);
+        skyLUT_.setAtmosphere(stdUnitAtmos_);
+        skyLUT_.setSun(sunDirection, sunRadiance);
+        skyLUT_.setTransmittance(transLUT_.getSRV());
+        skyLUT_.setMultiScattering(enableMultiScatter_, msLUT_.getSRV());
         skyLUT_.setRayMarching(skyMarchStepCount_);
         skyLUT_.setCamera(worldScale_ * camera_.getPosition());
 
-        skyLUT_.generate(
-            stdUnitAtmos_, sunDirection, sunRadiance,
-            transLUT_.getSRV(), msLUT_.getSRV());
+        skyLUT_.generate();
     }
 
     void buildAerialLUT(

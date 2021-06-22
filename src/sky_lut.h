@@ -16,14 +16,15 @@ public:
 
     void setRayMarching(int stepCount);
 
-    void enableMultiScattering(bool enable);
+    void setAtmosphere(const AtmosphereProperties &atmos);
 
-    void generate(
-        const AtmosphereProperties      &atmos,
-        const Float3                    &sunDirection,
-        const Float3                    &sunIntensity,
-        ComPtr<ID3D11ShaderResourceView> transmittance,
-        ComPtr<ID3D11ShaderResourceView> multiscatter);
+    void setSun(const Float3 &direction, const Float3 &intensity);
+
+    void setTransmittance(ComPtr<ID3D11ShaderResourceView> T);
+
+    void setMultiScattering(bool enabled, ComPtr<ID3D11ShaderResourceView> M);
+
+    void generate();
 
 private:
 

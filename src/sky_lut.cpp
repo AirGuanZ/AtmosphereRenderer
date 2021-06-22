@@ -57,26 +57,31 @@ void SkyLUT::setRayMarching(int stepCount)
     psParamsData_.lowResMarchStepCount = stepCount;
 }
 
-void SkyLUT::enableMultiScattering(bool enable)
-{
-    psParamsData_.enableMultiScattering = enable;
-}
-
-void SkyLUT::generate(
-    const AtmosphereProperties      &atmos,
-    const Float3                    &sunDirection,
-    const Float3                    &sunIntensity,
-    ComPtr<ID3D11ShaderResourceView> transmittance,
-    ComPtr<ID3D11ShaderResourceView> multiscatter)
+void SkyLUT::setAtmosphere(const AtmosphereProperties &atmos)
 {
     psAtmos_.update(atmos);
+}
 
-    psParamsData_.sunDirection = sunDirection;
-    psParamsData_.sunIntensity = sunIntensity;
+void SkyLUT::setSun(const Float3 &direction, const Float3 &intensity)
+{
+    psParamsData_.sunDirection = direction;
+    psParamsData_.sunIntensity = intensity;
+}
+
+void SkyLUT::setTransmittance(ComPtr<ID3D11ShaderResourceView> T)
+{
+    transmittanceSlot_->setShaderResourceView(std::move(T));
+}
+
+void SkyLUT::setMultiScattering(bool enabled, ComPtr<ID3D11ShaderResourceView> M)
+{
+    psParamsData_.enableMultiScattering = enabled;
+    multiScatterSlot_->setShaderResourceView(std::move(M));
+}
+
+void SkyLUT::generate()
+{
     psParams_.update(psParamsData_);
-    
-    transmittanceSlot_->setShaderResourceView(std::move(transmittance));
-    multiScatterSlot_->setShaderResourceView(std::move(multiscatter));
 
     LUT_.bind();
     LUT_.useDefaultViewport();
