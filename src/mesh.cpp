@@ -117,7 +117,7 @@ void MeshRenderer::setCamera(const Float3 &eye, const Mat4 &viewProj)
 
 void MeshRenderer::setSun(const Float3 &direction, const Float3 &intensity)
 {
-    psParamsData_.sunTheta     = std::asin(direction.y);
+    psParamsData_.sunTheta     = std::asin(-direction.y);
     psParamsData_.sunDirection = direction;
     psParamsData_.sunIntensity = intensity;
 }

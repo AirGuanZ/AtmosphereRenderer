@@ -36,10 +36,11 @@ private:
     
     float  sunAngleX_          = 0;
     float  sunAngleY_          = 11.6f;
-    float  sunIntensity_       = 7;
+    float  sunIntensity_       = 10;
     Float3 sunColor_           = { 1, 1, 1 };
 
     bool enableTerrain_      = true;
+    bool enableSky_          = true;
     bool enableShadow_       = true;
     bool enableSunDisk_      = true;
     bool enableMultiScatter_ = true;
@@ -136,12 +137,13 @@ private:
         window_->useDefaultRTVAndDSV();
         window_->useDefaultViewport();
         window_->clearDefaultDepth(1);
-        window_->clearDefaultRenderTarget({ 0, 1, 1, 0 });
+        window_->clearDefaultRenderTarget({ 0, 0, 0, 0 });
 
         if(enableTerrain_)
             renderMeshes(sunDirection, sunRadiance, sunViewProj);
 
-        renderSky();
+        if(enableSky_)
+            renderSky();
 
         if(enableSunDisk_)
             renderSunDisk(sunDirection, sunRadiance);
@@ -154,9 +156,10 @@ private:
             return;
         
         ImGui::Checkbox("Enable Multi Scattering", &enableMultiScatter_);
-        ImGui::Checkbox("Enable Shadow", &enableShadow_);
-        ImGui::Checkbox("Enable Sun Disk", &enableSunDisk_);
-        ImGui::Checkbox("Enable Terrain", &enableTerrain_);
+        ImGui::Checkbox("Enable Sky",              &enableSky_);
+        ImGui::Checkbox("Enable Shadow",           &enableShadow_);
+        ImGui::Checkbox("Enable Sun Disk",         &enableSunDisk_);
+        ImGui::Checkbox("Enable Terrain",          &enableTerrain_);
 
         ImGui::InputFloat("World Scale", &worldScale_);
 
@@ -175,6 +178,9 @@ private:
             changed |= ImGui::InputFloat3("Ozone Absorb          (um^-1)", &atmos_.absorbOzone.x);
             changed |= ImGui::InputFloat ("Ozone Center Height   (km)   ", &atmos_.ozoneCenterHeight);
             changed |= ImGui::InputFloat ("Ozone Thickness       (km)   ", &atmos_.ozoneThickness);
+
+            changed |= ImGui::InputInt2("Transmittance LUT Resolution", &transLUTRes_.x);
+            changed |= ImGui::InputInt2("Multi Scattering LUT Resolution", &msLUTRes_.x);
 
             if(changed)
             {
@@ -291,7 +297,7 @@ private:
         aerialLUT_.setMarchingParams(
             maxAerialDistance_, aerialPerSliceMarchCount_);
 
-        aerialLUT_.setMultiScatterLUT(msLUT_.getSRV());
+        aerialLUT_.setMultiScatterLUT(enableMultiScatter_, msLUT_.getSRV());
         aerialLUT_.setTransmittanceLUT(transLUT_.getSRV());
 
         aerialLUT_.render();

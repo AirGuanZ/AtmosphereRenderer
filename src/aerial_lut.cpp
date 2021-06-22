@@ -122,8 +122,9 @@ void AerialPerspectiveLUT::setMarchingParams(
 }
 
 void AerialPerspectiveLUT::setMultiScatterLUT(
-    ComPtr<ID3D11ShaderResourceView> M)
+    bool enableMultiScattering, ComPtr<ID3D11ShaderResourceView> M)
 {
+    csParamsData_.enableMultiScattering = enableMultiScattering;
     multiScatterSlot_->setShaderResourceView(std::move(M));
 }
 

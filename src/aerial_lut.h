@@ -29,7 +29,8 @@ public:
 
     void setMarchingParams(float maxDistance, int stepsPerSlice);
 
-    void setMultiScatterLUT(ComPtr<ID3D11ShaderResourceView> M);
+    void setMultiScatterLUT(
+        bool enableMultiScattering, ComPtr<ID3D11ShaderResourceView> M);
 
     void setTransmittanceLUT(ComPtr<ID3D11ShaderResourceView> T);
 
