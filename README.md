@@ -28,10 +28,12 @@ cmake ..
 Crucial shader performance measured on NVIDIA GTX 1060:
 
 * Sky-view LUT generation (64 * 64): 0.036 ms
-* Aerial perspective LUT generation without volume shadow (200 * 150 * 32): 0.13 ms
+* Aerial perspective LUT generation without volume shadow (64 * 64 * 32): 0.03 ms
 * Aerial perspective LUT generation with volume shadow (200 * 150 * 32): 0.2 ms
 
 Shaders can actually be further optimized by replacing feature flags in constant buffers with compile-time macros.
+
+Using `LUTs with higher resolution` or `ray marching with more number of steps` results in better quality and of course, lower performance.
 
 ## Screenshots
 

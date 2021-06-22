@@ -26,7 +26,7 @@ private:
 
     float worldScale_               = 200;
     float maxAerialDistance_        = 2000;
-    int   aerialPerSliceMarchCount_ = 2;
+    int   aerialPerSliceMarchCount_ = 1;
     float apJitterRadius_           = 1;
 
     int   sunDiskSegments_ = 32;
